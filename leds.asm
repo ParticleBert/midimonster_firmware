@@ -43,6 +43,8 @@
 ;xl wird benutzt	= r26	als...
 ;xh wird benutzt	= r27   ...tabellen-sicherungs-zeiger
 
+;yl wird benutzt	= r28    als
+;yh wird benutzt	= r29    ... animationszeiger
 
 ;zl wird benutzt    = r30   als ...
 ;zh wird benutzt    = r31   ..... arbeitszeiger auf die tabelle
@@ -99,8 +101,20 @@ main:
 	ldi	temp,$20			;ascii-null definieren
 	mov	ascii_null,temp
 
-	ldi	temp,1
-	mov	anim,temp			;animationszähler laden
+	clr yh				;yh löschen
+	ldi	yl,$60			;zeiger für animation auf anfang SRAM
+	
+	ldi anim,$2d		;5 fetzige asciis
+	st y+,anim			;ins sram
+
+	ldi anim,$2b
+	st y+,anim
+
+	ldi anim,$2a
+	st y+,anim
+	
+	ldi anim,$30
+	st y,anim			;  bis hierher!
 
 	ldi	temp,135			;135 als init-bpm
 	mov	bpm,temp
@@ -134,28 +148,28 @@ main:
 	ldi zh,high(tabelle)						;.....
 
 	adiw zl,55									;bpm-init auf 135
+												;in der tabelle 55 plätze nach vorne
 
 	mov	xl,zl									;zeiger in xl sichern
 	mov	xh,zh									;zeiger in xh sichern
 
 
 
-	sec
-	rol	zl
-	rol zh
+	sec											;carry setzen										
+	rol	zl										;zl nach links rollen, carry (1) fällt an bit 0
+	rol zh										;zh nach links rollen
 
-	lpm
-	mov	r1,r0
-	cbr zl,1
-	lpm
+	lpm											;high-byte laden
+	mov	r1,r0									;high-byte liegt in r1
+	cbr zl,1									;bit 0 löschen
+	lpm											;low-byte laden
 
 	
 	
 	out	OCR1AH,r1								;...comparewert
-	out	OCR1AL,r0								;.......
+	out	OCR1AL,r0								;laden
 	
 
-;	adiw r30,17
 	
 	ldi	temp,(1<<OCIE1A) | (1<<TOIE0)			;timer 1 interrupt register
 	out	timsk,temp								;enable timer 1 compare interrupt, enable timer0 overflow interrupt
@@ -171,13 +185,10 @@ main:
 	ldi temp,$a
 	out mcucr,temp			;ext. int 0 und 1 low-flanken empfindlich
 
-	out	udr,start
+	clr	ticks				;ticks-register löschen
+	clr	beats				;beats-register löschen
 
-	clr	ticks
-	clr	beats
-
-	
-	clr flags
+	clr flags				;flags-register löschen
 	sei						;interrupts global aktivieren
 
 
@@ -277,7 +288,7 @@ i1_raus:
 ;wenn pinb.6 = 1 -> bpm
 ;wenn pinb.6 = 0 -> tick
 timer0_overflow:
-;	inc  zaehldummy
+
 ;	cbr zaehldummy,0b11111110
 ;	tst zaehldummy				;wenn der dummy nicht null
 ;	brne timer0_raus			;
@@ -287,6 +298,7 @@ timer0_overflow:
 	inc		beats_digit					;pfeil
 	digit_0 beats_digit					;anzeigen!
 
+	inc  zaehldummy						;immer den zaehldummy erhöhen
 
 	sbis	pinb,schalter		;wenn schalter = 1 (tick-modus)
 	rjmp 	tick_modus			;gehe NICHT raus sondern mach weiter
@@ -319,8 +331,36 @@ nur_ints_an:
 
 tick_modus:
 
+	andi yl,$3					;letzten beiden bits stehenlassen
+	ori yl,$60					;auf sram-groesse bringen
+
+	ld anim,y+
+
+	tst flags							;flags testen
+	breq mitte_nullen					;wenn null, gib nullen in der mitte aus
+;flag 1 ist rechter taster, rechte anim, int0
+;flag 2 ist linker taster, linke anim, int1
+
+	sbrc flags,0						;wenn flag1 nicht gesetzt ist
+	rcall anim_rechts					;gib anim rechts auch nicht aus
+
+	digit_2 anim						;aber flag2 muss gesetzt sein, also linke anim ausgeben
+	rjmp dreh_eins						;und zur eins
+
+
+mitte_nullen:
+	digit_1 ascii_null
+	digit_2 ascii_null
+
+
+
+
+
+dreh_eins:
 	sbr		beats_digit,0b110000		;drehende eins links generieren
 	digit_3 beats_digit					;und raus
+
+
 	
 	
 timer0_raus:
@@ -328,7 +368,16 @@ timer0_raus:
 
 
 
+anim_rechts:
+	digit_1 anim						;rechte anim ausgeben
+	sbrc flags,1						;wenn flag 2 nicht gesetzt ist
+	ret									;spring nicht zurück, wo Du flag 2 ausgeben müßtest
 
+	in temp,spl								;sondern korrigiere den stack
+	inc temp
+	inc temp
+	out spl,temp
+	rjmp dreh_eins						;und springe zur dreh_eins
 
 
 
