@@ -1,39 +1,27 @@
 ;--------------------------------------- timer1 compare isr ----------------------------------------------	
 clock:
-	sbi usr,txc				;TX-Flag LÖSCHEN!
+	sbi usr,txc				;TX-Flag LÖSCHEN, zur sicherheit
+
 	out	udr,clock			;clock-tick ans uart
 
-	brtc nochmal			;gehe weiter, wenn t nicht gesetzt ist
+	brtc kein_t_flag			;gehe weiter, wenn t nicht gesetzt ist
 	out	OCR1AH,r1			;sonst lade neuen
 	out	OCR1AL,r0			;comparewert
 	clt						;und lösche t-flag
 
 
-nochmal:
-	sbis usr,txc
-	rjmp nochmal
+kein_t_flag:
+;
+;	sbis usr,txc
+;	rjmp nochmal
 
-	sbi usr,txc				;TX-Flag LÖSCHEN!
+;	sbi usr,txc				;TX-Flag LÖSCHEN!
 
 	cp ticks,ticks_max		;hat ticks schon die max. anzahl erreicht?
 	brne weg				;wenn nein, raus
 	inc beats				;wenn ja, erhöhe den BEAT
 	clr	ticks				;und lösche den TICKS-zähler
 
-;	mov		beats_digit,beats			;beat-zähl-anzeige vorbereiten
-;	cbr		beats_digit,0b11111100
-;	inc		beats_digit
-
-
-;	digit_0 beats_digit
-
-;	sbic	pinb,schalter	;wenn schalter = 0
-;	rjmp	dingsbums		;überspringe diese anweisung
-							;dann bist Du im bpm-modus
-	
-;	sbr		beats_digit,0b110000		;und auf ascii-niveau bringen
-	
-;	digit_3 beats_digit
 
 dingsbums:
 	cp beats, beats_max		;ist BEATS auch schon am maximum?
@@ -48,19 +36,30 @@ dingsbums:
 	tst flags				;ist flags null?
 	breq weg				;wenn ja -> weg
 
-	asr flags					;wenn nicht, einmal nach rechts shiften
-	brcs weiter_testen		;wenn carry gesetzt (heißt, int0 wurde angefortert) gehe zu weiter_testen
-							;ansonten mache hier weiter, das heißt,
+
+	rcall flag_warten		;wenn nein, warten bis CLOCK endgültig raus ist, da mind. ein START folgt
+
+	
+	asr flags				;flags einmal nach rechts shiften
+	brcs weiter_testen		;wenn carry gesetzt (heißt, int0 wurde angefordert) gehe zu weiter_testen
+							;ansonsten mache hier weiter, das heißt,
 							;daß NUR int1 angefordert wurde.
 
+
 	cbi portd,and0			;and0 löschen
+
+	out udr,stop			;stop rausschicken
+
+	rcall flag_warten
+
+	
 	out udr,start			;start rausschicken
-nochmal_1:					;warten..
-	sbis usr,txc			;bis...
-	rjmp nochmal_1			;fertig...
+
+	rcall flag_warten
+
 	sbi portd,and0			;and0 wieder setzen
 
-	rjmp int_kill
+	rjmp int_kill			;und raus
 
 weiter_testen:
 
@@ -69,18 +68,24 @@ weiter_testen:
 							;und es muß einfach nur ein start raus, ohne gate zu setzen.
 
 	cbi portd,and1			;ansonsten wurde nur int1 angefordert
-	out udr,start			;und es gibt den start...
-nochmal_3:					;nur..
-	sbis usr,txc			;für
-	rjmp nochmal_3			;int..
-	sbi portd,and1			;1....
+	out udr,stop
+	
+	rcall flag_warten			;und es gibt den start...
 
+	out udr,start
+
+	rcall flag_warten
+	sbi portd,and1
 	rjmp int_kill
 	
 start_an_beide:		
-	out udr,start			;start raus, und weg.
+	out udr,stop			;stop raus
+	rcall flag_warten
+	
+	out udr,start			;start raus
+	rcall flag_warten
 
-	clr flags
+;	clr flags
 
 int_kill:
 	clr	flags

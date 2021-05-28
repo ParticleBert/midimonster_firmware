@@ -1,3 +1,9 @@
+;MIDIMONSTER V1.0
+; (C) 	Christian Wiesner
+; 	Max-Planck-Ring 16/C217
+;	98693 Ilmenau
+;	skwit@basedrum.de
+
 ;---- verwendete register
 ; r16 - temp
 ; r17 - beinhaltet clock (f8)
@@ -370,7 +376,7 @@ dreh_eins:
 timer0_raus:
 	reti
 
-
+; ------------------------------- unterprogramme -----------------------------------------
 
 anim_rechts:
 	digit_1 anim						;rechte anim ausgeben
@@ -384,7 +390,14 @@ anim_rechts:
 	rjmp dreh_eins						;und springe zur dreh_eins
 
 
+flag_warten:
 
+wart:
+	sbis usr,txc						;ist txc-gesetzt?
+	rjmp wart							;nein, nochmal schauen
+	
+	sbi usr,txc 						;ja. löschen
+	ret
 
 
 ; ------------------------- bin 2 bcd-wandlung ----------------------------------------------
