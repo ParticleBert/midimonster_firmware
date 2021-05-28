@@ -20,20 +20,20 @@ nochmal:
 	inc beats				;wenn ja, erhöhe den BEAT
 	clr	ticks				;und lösche den TICKS-zähler
 
-	mov		beats_digit,beats			;beat-zähl-anzeige vorbereiten
-	cbr		beats_digit,0b11111100
-	inc		beats_digit
+;	mov		beats_digit,beats			;beat-zähl-anzeige vorbereiten
+;	cbr		beats_digit,0b11111100
+;	inc		beats_digit
 
 
-	digit_0 beats_digit
+;	digit_0 beats_digit
 
-	sbic	pinb,schalter	;wenn schalter = 0
-	rjmp	dingsbums		;überspringe diese anweisung
+;	sbic	pinb,schalter	;wenn schalter = 0
+;	rjmp	dingsbums		;überspringe diese anweisung
 							;dann bist Du im bpm-modus
 	
-	sbr		beats_digit,0b110000		;und auf ascii-niveau bringen
+;	sbr		beats_digit,0b110000		;und auf ascii-niveau bringen
 	
-	digit_3 beats_digit
+;	digit_3 beats_digit
 
 dingsbums:
 	cp beats, beats_max		;ist BEATS auch schon am maximum?

@@ -183,10 +183,6 @@ main:
 
 	
 spring:
-	sbic pinb,schalter
-	rjmp spring
-	digit_1 ascii_null
-	digit_2 ascii_null
 	rjmp	spring	
 	
 ;--------------------------- timer 1 compare isr ------------------------------------------------
@@ -281,10 +277,16 @@ i1_raus:
 ;wenn pinb.6 = 1 -> bpm
 ;wenn pinb.6 = 0 -> tick
 timer0_overflow:
-	inc  zaehldummy
-	cbr zaehldummy,0b11111110
-	tst zaehldummy				;wenn der dummy nicht null
-	brne timer0_raus			;
+;	inc  zaehldummy
+;	cbr zaehldummy,0b11111110
+;	tst zaehldummy				;wenn der dummy nicht null
+;	brne timer0_raus			;
+
+	mov		beats_digit,beats			;immer
+	cbr		beats_digit,0b11111100		;rotierenden
+	inc		beats_digit					;pfeil
+	digit_0 beats_digit					;anzeigen!
+
 
 	sbis	pinb,schalter		;wenn schalter = 1 (tick-modus)
 	rjmp 	tick_modus			;gehe NICHT raus sondern mach weiter
@@ -313,9 +315,12 @@ nur_ints_an:
 	out gifr,temp
 	ldi temp,0b11000000
 	out gimsk,temp
+	rjmp timer0_raus
 
 tick_modus:
 
+	sbr		beats_digit,0b110000		;drehende eins links generieren
+	digit_3 beats_digit					;und raus
 	
 	
 timer0_raus:
