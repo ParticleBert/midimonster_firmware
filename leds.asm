@@ -10,7 +10,7 @@
 ; r28 - beats hochzählen
 ; r31 - flags
 
-;-------------------------------- Makros ----------------------------------------------------
+
 .include "macros.asm"
 
 
@@ -40,6 +40,7 @@
 
 .def beats_digit 	= r24
 .def zaehldummy     = r25
+
 ;xl wird benutzt	= r26	als...
 ;xh wird benutzt	= r27   ...tabellen-sicherungs-zeiger
 
@@ -48,6 +49,7 @@
 
 ;zl wird benutzt    = r30   als ...
 ;zh wird benutzt    = r31   ..... arbeitszeiger auf die tabelle
+
 .equ schalter = 6
 
 .equ and1 = 0
@@ -233,7 +235,7 @@ tabellenende_dec:
 	clt						;t_flag wieder löschen
 	
 
-	sbis portb,schalter
+	sbis pinb,schalter
 i0_flags:
 	sbr flags,1									
 
@@ -243,8 +245,8 @@ i0_raus:
 ;i1 ist linker taster
 i1service:
 
-	sbis pinb,schalter		;wenn schalterbit gesetzt
-	rjmp i1_flags			;überspringe die flageinstellung
+	sbis pinb,schalter		;wenn schalterbit null
+	rjmp i1_flags			;springe zur flageinstellung
 
 	mov	zl,xl				;sicheren tabellenpointer
 	mov zh,xh				;in z kopieren
@@ -276,7 +278,7 @@ tabellenende_inc:
 	clt						;t_flag wieder löschen
 
 
-	sbis portb,schalter
+	sbis pinb,schalter
 i1_flags:
 	sbr flags,2									
 
@@ -360,7 +362,7 @@ dreh_eins:
 	sbr		beats_digit,0b110000		;drehende eins links generieren
 	digit_3 beats_digit					;und raus
 
-
+	
 	
 	
 timer0_raus:
