@@ -206,11 +206,12 @@ i0service:
 	sbis pinb,schalter		;wenn schalter=0
 	rjmp i0_flags			;springe NICHT zum flag-setzen
 		
+	inc bpm					;bpm erhöhen
+	adiw xl,1				;tabelle eins nach oben
+
 	mov	zl,xl				;sicheren tabellenpointer
 	mov zh,xh				;in z kopieren
 
-	inc bpm					;bpm erhöhen
-	adiw xl,1				;tabelle eins nach oben
 
 	sec						;carry setzen
 	rol	zl					;zl nach links rollen, carry fällt rein wg. high-byte
@@ -248,11 +249,12 @@ i1service:
 	sbis pinb,schalter		;wenn schalterbit null
 	rjmp i1_flags			;springe zur flageinstellung
 
+	dec bpm					;bpm erniedrigen
+	sbiw xl,1				;tabelle eins nach unten
+
 	mov	zl,xl				;sicheren tabellenpointer
 	mov zh,xh				;in z kopieren
 
-	dec bpm					;bpm erniedrigen
-	sbiw xl,1				;tabelle eins nach unten
 
 	sec						;carry setzen
 	rol	zl					;zl nach links rollen, carry fällt rein wg. high-byte
@@ -275,7 +277,7 @@ i1service:
 tabellenende_inc:
 	inc bpm					;erniedrigten bpm-zähler korrigieren
 	adiw xl,1				;tabelle wieder einen hoch
-	clt						;t_flag wieder löschen
+;	clt						;t_flag wieder löschen
 
 
 	sbis pinb,schalter
