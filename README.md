@@ -1,12 +1,7 @@
-# midimonster_firmware
+# midimonster_firmware - The firmware for the first midimonster back in 2002
 
-**A blast from the past - the old firmware for the first midimonster back in 2002.**
+The code is here for nostalgic reasons. The Monster was based on the AT90S2313. The two MIDI-Outputs with one UART were faked using two NAND-Gates, which allowed controlling of the START/STOPP-byte to the appropriate MIDI-OUT.
 
-I don't know why I have written this in assembler. I don't even know the processor type anymore.
+I don't even know why I have written this in assembler. I guess this happened under the impression that it hat to be timing solid. Hm.
 
-This processor had one UART. To be able to control two MIDI-Outputs I used two AND-Gates to drive the MIDI-Ports and control the output via this AND-Gate.
-
-The math to calculate between BPM and Time-Between-Ticks was too difficult for me and the small processor, so I used a conversion table.
-
-I also don't know the type of the display any more.
-
+What I really don't know anymore is the type of the really nice display.
